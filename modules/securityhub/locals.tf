@@ -1,0 +1,92 @@
+locals {
+
+  # Get the ID and emamil address of the 'account'
+  account = one([for account in data.aws_organizations_organization.org.accounts : { id = account.id, email = account.email } if account.id == data.aws_caller_identity.account.id])
+
+  # List of available Security Hub products to subscribe to (https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/securityhub_product_subscription)
+  # Reference: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-internal-providers.html
+  # Reference: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-partner-providers.html
+  available_securityhub_integrations = {
+    # AWS Services
+    "aws/guardduty" = "arn:aws:securityhub:${data.aws_region.account.name}::product/aws/guardduty"
+    "aws/inspector" = "arn:aws:securityhub:${data.aws_region.account.name}::product/aws/inspector"
+    "aws/macie"     = "arn:aws:securityhub:${data.aws_region.account.name}::product/aws/macie"
+
+    # Third Party integrations
+    "3CORESec - 3CORESec NTA"                                               = "arn:aws:securityhub:${data.aws_region.account.name}::product/3coresec/3coresec"
+    "Alert Logic - SIEMless Threat Management"                              = "arn:aws:securityhub:${data.aws_region.account.name}::product/alertlogic/althreatmanagement"
+    "Aqua Security - Aqua Cloud Native Security Platform"                   = "arn:aws:securityhub:${data.aws_region.account.name}::product/aquasecurity/aquasecurity"
+    "Aqua Security - Kube-bench"                                            = "arn:aws:securityhub:${data.aws_region.account.name}::product/aqua-security/kube-bench"
+    "Armor - Armor Anywhere"                                                = "arn:aws:securityhub:${data.aws_region.account.name}::product/armordefense/armoranywhere"
+    "AttackIQ - AttackIQ"                                                   = "arn:aws:securityhub:${data.aws_region.account.name}::product/attackiq/attackiq-platform"
+    "Barracuda Networks - Cloud Security Guardian"                          = "arn:aws:securityhub:${data.aws_region.account.name}::product/barracuda/cloudsecurityguardian"
+    "BigID - BigID Enterprise"                                              = "arn:aws:securityhub:${data.aws_region.account.name}::product/bigid/bigid-enterprise"
+    "Blue Hexagon - Blue Hexagon for AWS"                                   = "arn:aws:securityhub:${data.aws_region.account.name}::product/blue-hexagon/blue-hexagon-for-aws"
+    "Capitis Solutions - C2VS"                                              = "arn:aws:securityhub:${data.aws_region.account.name}::product/capitis/c2vs"
+    "Check Point - CloudGuard IaaS"                                         = "arn:aws:securityhub:${data.aws_region.account.name}::product/checkpoint/cloudguard-iaas"
+    "Check Point - CloudGuard Posture Management"                           = "arn:aws:securityhub:${data.aws_region.account.name}::product/checkpoint/dome9-arc"
+    "Cloud Storage Security - Antivirus for Amazon S3"                      = "arn:aws:securityhub:${data.aws_region.account.name}::product/cloud-storage-security/antivirus-for-amazon-s3"
+    "CrowdStrike - CrowdStrike Falcon"                                      = "arn:aws:securityhub:${data.aws_region.account.name}::product/crowdstrike/crowdstrike-falcon"
+    "CyberArk - Privileged Threat Analytics"                                = "arn:aws:securityhub:${data.aws_region.account.name}::product/cyberark/cyberark-pta"
+    "Data Theorem - Data Theorem"                                           = "arn:aws:securityhub:${data.aws_region.account.name}::product/data-theorem/api-cloud-web-secure"
+    "Forcepoint - Forcepoint CASB"                                          = "arn:aws:securityhub:${data.aws_region.account.name}::product/forcepoint/forcepoint-casb"
+    "Forcepoint - Forcepoint Cloud Security Gateway"                        = "arn:aws:securityhub:${data.aws_region.account.name}::product/forcepoint/forcepoint-cloud-security-gateway"
+    "Forcepoint - Forcepoint DLP"                                           = "arn:aws:securityhub:${data.aws_region.account.name}::product/forcepoint/forcepoint-dlp"
+    "Forcepoint - Forcepoint NGFW"                                          = "arn:aws:securityhub:${data.aws_region.account.name}::product/forcepoint/forcepoint-ngfw"
+    "Fugue - Fugue"                                                         = "arn:aws:securityhub:${data.aws_region.account.name}::product/fugue/fugue"
+    "Guardicore - Centra 4.0"                                               = "arn:aws:securityhub:${data.aws_region.account.name}::product/guardicore/guardicore"
+    "Guardicore - Infection Monkey"                                         = "arn:aws:securityhub:${data.aws_region.account.name}::product/guardicore/aws-infection-monkey"
+    "HackerOne - Vulnerability Intelligence"                                = "arn:aws:securityhub:${data.aws_region.account.name}::product/hackerone/vulnerability-intelligence"
+    "JFrog - Xray"                                                          = "arn:aws:securityhub:${data.aws_region.account.name}::product/jfrog/jfrog-xray"
+    "Juniper Networks - vSRX Next Generation Firewall"                      = "arn:aws:securityhub:${data.aws_region.account.name}::product/juniper-networks/vsrx-next-generation-firewall"
+    "k9 Security - Access Analyzer"                                         = "arn:aws:securityhub:${data.aws_region.account.name}::product/k9-security/access-analyzer"
+    "Lacework - Lacework"                                                   = "arn:aws:securityhub:${data.aws_region.account.name}::product/lacework/lacework"
+    "McAfee - MVISION Cloud Native Application Protection Platform (CNAPP)" = "arn:aws:securityhub:${data.aws_region.account.name}::product/mcafee-skyhigh/mcafee-mvision-cloud-aws"
+    "NETSCOUT - NETSCOUT Cyber Investigator"                                = "arn:aws:securityhub:us-east-1::product/netscout/netscout-cyber-investigator"
+    "Palo Alto Networks - Prisma Cloud Compute"                             = "arn:aws:securityhub:${data.aws_region.account.name}::product/twistlock/twistlock-enterprise"
+    "Palo Alto Networks - Prisma Cloud Enterprise"                          = "arn:aws:securityhub:${data.aws_region.account.name}::product/paloaltonetworks/redlock"
+    "Prowler - Prowler"                                                     = "arn:aws:securityhub:${data.aws_region.account.name}::product/prowler/prowler"
+    "Qualys - Vulnerability Management"                                     = "arn:aws:securityhub:${data.aws_region.account.name}::product/qualys/qualys-vm"
+    "Rapid7 - InsightVM"                                                    = "arn:aws:securityhub:${data.aws_region.account.name}::product/rapid7/insightvm"
+    "SecureCloudDB - SecureCloudDB"                                         = "arn:aws:securityhub:${data.aws_region.account.name}::product/secureclouddb/secureclouddb"
+    "SentinelOne - SentinelOne"                                             = "arn:aws:securityhub:${data.aws_region.account.name}::product/sentinelone/endpoint-protection"
+    "Sonrai Security - Sonrai Dig"                                          = "arn:aws:securityhub:${data.aws_region.account.name}::product/sonrai-security/sonrai-dig"
+    "Sophos - Server Protection"                                            = "arn:aws:securityhub:${data.aws_region.account.name}::product/sophos/sophos-server-protection"
+    "StackRox - StackRox Kubernetes Security"                               = "arn:aws:securityhub:${data.aws_region.account.name}::product/stackrox/kubernetes-security"
+    "Sumo Logic - Machine Data Analytics"                                   = "arn:aws:securityhub:${data.aws_region.account.name}::product/sumologicinc/sumologic-mda"
+    "Symantec - Cloud Workload Protection"                                  = "arn:aws:securityhub:${data.aws_region.account.name}::product/symantec-corp/symantec-cwp"
+    "Sysdig - Sysdig Secure for cloud"                                      = "arn:aws:securityhub:${data.aws_region.account.name}::product/sysdig/sysdig-secure-for-cloud"
+    "Tenable - Tenable.io"                                                  = "arn:aws:securityhub:${data.aws_region.account.name}::product/tenable/tenable-io"
+    "Vectra Detect"                                                         = "arn:aws:securityhub:${data.aws_region.account.name}::product/vectra-ai/cognito-detect"
+    "Atlassian - Jira Service Management"                                   = "Not applicable"
+    "Atlassian - Opsgenie"                                                  = "Not applicable"
+    "FireEye - FireEye Helix"                                               = "Not applicable"
+    "Fortinet - FortiCNP"                                                   = "Not applicable"
+    "Helecloud - Managed Security"                                          = "Not applicable"
+    "IBM - QRadar"                                                          = "Not applicable"
+    "Logz.io Cloud SIEM"                                                    = "Not applicable"
+    "MicroFocus - MicroFocus Arcsight"                                      = "Not applicable"
+    "PagerDuty - PagerDuty"                                                 = "Not applicable"
+    "Palo Alto Networks - Cortex XSOAR"                                     = "Not applicable"
+    "Palo Alto Networks - VM-Series"                                        = "Not applicable"
+    "Rackspace Technology - Cloud Native Security"                          = "Not applicable"
+    "Rapid7 - InsightConnect"                                               = "Not applicable"
+    "RSA - RSA Archer"                                                      = "Not applicable"
+    "ServiceNow - ITSM"                                                     = "Not applicable"
+    "Slack - Slack"                                                         = "Not applicable"
+    "Splunk - Splunk Enterprise"                                            = "Not applicable"
+    "Splunk - Splunk Phantom"                                               = "Not applicable"
+    "ThreatModeler"                                                         = "Not applicable"
+    "Caveonix - Caveonix Cloud"                                             = "arn:aws:securityhub:${data.aws_region.account.name}::product/caveonix/caveonix-cloud"
+    "Cloud Custodian - Cloud Custodian"                                     = "arn:aws:securityhub:${data.aws_region.account.name}::product/cloud-custodian/cloud-custodian"
+    "cloudtamer.io - cloudtamer.io"                                         = "arn:aws:securityhub:${data.aws_region.account.name}::product/cloudtamerio/cloudtamerio"
+    "DisruptOps, Inc. - DisruptOPS"                                         = "arn:aws:securityhub:${data.aws_region.account.name}::product/disruptops-inc/disruptops"
+    "Turbot - Turbot"                                                       = "arn:aws:securityhub:${data.aws_region.account.name}::product/turbot/turbot"
+  }
+
+  securityhub_security_standards = {
+    "aws foundational security best practices" = "arn:aws:securityhub:${data.aws_region.account.name}::standards/aws-foundational-security-best-practices/v/1.0.0"
+    "cis aws foundations"                      = "arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.2.0"
+    "pci dss"                                  = "arn:aws:securityhub:${data.aws_region.account.name}::standards/pci-dss/v/3.2.1"
+  }
+}
